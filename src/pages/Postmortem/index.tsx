@@ -32,7 +32,7 @@ import {
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/lib/utils';
 import { formatDateTime, formatRelativeTime } from '@/utils/format';
-import type { PostmortemReport, PostmortemStatus, ActionItem, IncidentSeverity } from '@/types';
+import type { PostmortemReport, PostmortemStatus, ActionItem, IncidentSeverity, Incident } from '@/types';
 
 const severityConfig: Record<IncidentSeverity, { label: string; color: string; bgColor: string; borderColor: string; icon: typeof AlertTriangle }> = {
   critical: {
@@ -247,13 +247,14 @@ function PostmortemCard({ report, severity, onView, onEdit, onDelete }: Postmort
 interface ReportDrawerProps {
   report: PostmortemReport | null;
   mode: 'view' | 'edit';
-  incidents: { id: string; title: string; severity: IncidentSeverity }[];
+  incidents: Incident[];
   onClose: () => void;
   onSave: (report: PostmortemReport) => void;
   onPublish: (report: PostmortemReport) => void;
+  onUpdate: (report: PostmortemReport) => void;
 }
 
-function ReportDrawer({ report, mode, incidents, onClose, onSave, onPublish }: ReportDrawerProps) {
+function ReportDrawer({ report, mode, incidents, onClose, onSave, onPublish, onUpdate }: ReportDrawerProps) {
   const [title, setTitle] = useState(report?.title || '');
   const [incidentId, setIncidentId] = useState(report?.incidentId || '');
   const [summary, setSummary] = useState(report?.content.summary || '');
@@ -303,9 +304,51 @@ function ReportDrawer({ report, mode, incidents, onClose, onSave, onPublish }: R
   const handleGenerateFromIncident = () => {
     if (!selectedIncident) return;
     setTitle(`${selectedIncident.title} - 复盘报告`);
-    setSummary(selectedIncident.description || '');
-    setTimeline(selectedIncident.timeline || '');
-    setImpact(selectedIncident.impact || '');
+
+    const startStr = formatDateTime(selectedIncident.startTime).split(' ')[1].substring(0, 5);
+    const endStr = selectedIncident.endTime
+      ? formatDateTime(selectedIncident.endTime).split(' ')[1].substring(0, 5)
+      : '至今';
+    const duration = selectedIncident.endTime
+      ? Math.round((selectedIncident.endTime.getTime() - selectedIncident.startTime.getTime()) / (1000 * 60))
+      : Math.round((new Date().getTime() - selectedIncident.startTime.getTime()) / (1000 * 60));
+
+    const summaryText = `${formatDateTime(selectedIncident.startTime).split(' ')[0]} ${startStr}，${selectedIncident.title}。${selectedIncident.impactScope}。预计影响时长约${duration}分钟。`;
+    setSummary(summaryText);
+
+    const timelineText = selectedIncident.events
+      .map((evt, idx) => {
+        const timeStr = formatDateTime(evt.timestamp).split(' ')[1].substring(0, 5);
+        return `${timeStr} - ${evt.title}`;
+      })
+      .join('\n');
+    setTimeline(timelineText);
+
+    setImpact(selectedIncident.impactScope);
+  };
+
+  const handleActionStatusCycle = (id: string) => {
+    if (!report) return;
+    const statusOrder: Array<'pending' | 'in-progress' | 'completed'> = ['pending', 'in-progress', 'completed'];
+    const currentIndex = statusOrder.findIndex((s) =>
+      actionItems.find((item) => item.id === id)?.status === s
+    );
+    const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
+
+    const updatedItems = actionItems.map((item) =>
+      item.id === id ? { ...item, status: nextStatus } : item
+    );
+    setActionItems(updatedItems);
+
+    const updatedReport: PostmortemReport = {
+      ...report,
+      updatedAt: new Date(),
+      content: {
+        ...report.content,
+        actionItems: updatedItems,
+      },
+    };
+    onUpdate(updatedReport);
   };
 
   const handleAddActionItem = () => {
@@ -660,15 +703,22 @@ function ReportDrawer({ report, mode, incidents, onClose, onSave, onPublish }: R
                                 <span>截止: {formatDateTime(item.dueDate).split(' ')[0]}</span>
                               </div>
                             </div>
-                            <span className={cn(
-                              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border flex-shrink-0 cursor-pointer',
-                              statusInfo.bgColor,
-                              statusInfo.borderColor,
-                              statusInfo.color
-                            )}>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleActionStatusCycle(item.id);
+                              }}
+                              className={cn(
+                                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity',
+                                statusInfo.bgColor,
+                                statusInfo.borderColor,
+                                statusInfo.color
+                              )}
+                            >
                               <StatusIcon className="w-3 h-3" />
                               {statusInfo.label}
-                            </span>
+                            </button>
                           </div>
                           {item.note && (
                             <div className="flex items-start gap-1.5 p-2 rounded-md bg-dark-700/40 border border-dark-600/30">
@@ -756,7 +806,12 @@ function ReportDrawer({ report, mode, incidents, onClose, onSave, onPublish }: R
               <>
                 <button
                   type="button"
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => {
+                    if (report) {
+                      setEditingStartSnapshot(report);
+                    }
+                    setIsEditing(true);
+                  }}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500/20 border border-primary-500/30 text-primary-400 hover:bg-primary-500/30 transition-colors text-sm"
                 >
                   <Edit className="w-4 h-4" />
@@ -997,6 +1052,8 @@ export default function Postmortem() {
 
   const filteredReports = useMemo(() => {
     return postmortemReports.filter((report) => {
+      if (isNewReport && report.id === selectedReportId) return false;
+
       if (statusFilter !== 'all' && report.status !== statusFilter) return false;
 
       if (timeFilter !== 'all') {
@@ -1040,7 +1097,7 @@ export default function Postmortem() {
 
       return true;
     });
-  }, [postmortemReports, statusFilter, timeFilter, severityFilter, incidentFilter, searchQuery, incidentMap]);
+  }, [postmortemReports, statusFilter, timeFilter, severityFilter, incidentFilter, searchQuery, incidentMap, isNewReport, selectedReportId]);
 
   const handleView = (report: PostmortemReport) => {
     setSelectedReportId(report.id);
@@ -1214,7 +1271,7 @@ export default function Postmortem() {
         <ReportDrawer
           report={selectedReport}
           mode={drawerMode}
-          incidents={Array.from(incidentMap.values())}
+          incidents={incidents}
           onClose={() => {
             if (isNewReport && selectedReportId) {
               deletePostmortemReport(selectedReportId);
@@ -1224,6 +1281,7 @@ export default function Postmortem() {
           }}
           onSave={handleSaveReport}
           onPublish={handlePublishReport}
+          onUpdate={handleSaveReport}
         />
       )}
 
