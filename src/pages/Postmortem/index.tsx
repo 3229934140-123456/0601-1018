@@ -889,14 +889,20 @@ function MonthlyReportModal({ isOpen, onClose, reports, incidents, alerts }: Mon
 }
 
 export default function Postmortem() {
-  const { postmortemReports, incidents, alerts } = useAppStore();
+  const { postmortemReports, incidents, alerts, addPostmortemReport, updatePostmortemReport, deletePostmortemReport, publishPostmortemReport } = useAppStore();
 
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [timeFilter, setTimeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedReport, setSelectedReport] = useState<PostmortemReport | null>(null);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [drawerMode, setDrawerMode] = useState<'view' | 'edit'>('view');
+  const [isNewReport, setIsNewReport] = useState(false);
   const [showMonthlyModal, setShowMonthlyModal] = useState(false);
+
+  const selectedReport = useMemo(() => {
+    if (!selectedReportId) return null;
+    return postmortemReports.find((r) => r.id === selectedReportId) || null;
+  }, [postmortemReports, selectedReportId]);
 
   const incidentMap = useMemo(() => {
     const map = new Map<string, { id: string; title: string; severity: IncidentSeverity; startTime: Date; endTime?: Date }>();
@@ -946,23 +952,30 @@ export default function Postmortem() {
   }, [postmortemReports, statusFilter, timeFilter, searchQuery]);
 
   const handleView = (report: PostmortemReport) => {
-    setSelectedReport(report);
+    setSelectedReportId(report.id);
     setDrawerMode('view');
+    setIsNewReport(false);
   };
 
   const handleEdit = (report: PostmortemReport) => {
-    setSelectedReport(report);
+    setSelectedReportId(report.id);
     setDrawerMode('edit');
+    setIsNewReport(false);
   };
 
   const handleDelete = (id: string) => {
     if (window.confirm('确定要删除这份复盘报告吗？')) {
+      deletePostmortemReport(id);
+      if (selectedReportId === id) {
+        setSelectedReportId(null);
+      }
     }
   };
 
   const handleNewReport = () => {
+    const newId = `pm-${Date.now()}`;
     const newReport: PostmortemReport = {
-      id: `pm-${Date.now()}`,
+      id: newId,
       incidentId: '',
       title: '新建复盘报告',
       createdAt: new Date(),
@@ -977,18 +990,22 @@ export default function Postmortem() {
         lessonsLearned: '',
       },
     };
-    setSelectedReport(newReport);
+    addPostmortemReport(newReport);
+    setSelectedReportId(newId);
     setDrawerMode('edit');
+    setIsNewReport(true);
   };
 
   const handleSaveReport = (report: PostmortemReport) => {
-    setSelectedReport(report);
+    updatePostmortemReport(report);
     setDrawerMode('view');
+    setIsNewReport(false);
   };
 
   const handlePublishReport = (report: PostmortemReport) => {
-    setSelectedReport(report);
+    updatePostmortemReport({ ...report, status: 'published', updatedAt: new Date() });
     setDrawerMode('view');
+    setIsNewReport(false);
   };
 
   return (
@@ -1086,7 +1103,13 @@ export default function Postmortem() {
         report={selectedReport}
         mode={drawerMode}
         incidents={Array.from(incidentMap.values())}
-        onClose={() => setSelectedReport(null)}
+        onClose={() => {
+          if (isNewReport && selectedReportId) {
+            deletePostmortemReport(selectedReportId);
+          }
+          setSelectedReportId(null);
+          setIsNewReport(false);
+        }}
         onSave={handleSaveReport}
         onPublish={handlePublishReport}
       />

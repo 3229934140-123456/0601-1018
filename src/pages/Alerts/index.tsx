@@ -343,8 +343,13 @@ export default function Alerts() {
   const [serviceFilter, setServiceFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const pageSize = 10;
+
+  const selectedAlert = useMemo(() => {
+    if (!selectedAlertId) return null;
+    return alerts.find((a) => a.id === selectedAlertId) || null;
+  }, [alerts, selectedAlertId]);
 
   const todayAlerts = useMemo(() => {
     const today = new Date();
@@ -508,26 +513,14 @@ export default function Alerts() {
 
   const handleAcknowledge = (alertId: string) => {
     acknowledgeAlert(alertId, '当前用户');
-    if (selectedAlert?.id === alertId) {
-      const updated = alerts.find((a) => a.id === alertId);
-      if (updated) setSelectedAlert(updated);
-    }
   };
 
   const handleCloseAlert = (alertId: string) => {
     closeAlert(alertId, '当前用户');
-    if (selectedAlert?.id === alertId) {
-      const updated = alerts.find((a) => a.id === alertId);
-      if (updated) setSelectedAlert(updated);
-    }
   };
 
   const handleAddNote = (alertId: string, content: string) => {
     addAlertNote(alertId, content, '当前用户');
-    if (selectedAlert?.id === alertId) {
-      const updated = alerts.find((a) => a.id === alertId);
-      if (updated) setSelectedAlert(updated);
-    }
   };
 
   return (
@@ -683,7 +676,7 @@ export default function Alerts() {
                       <tr
                         key={alert.id}
                         className="hover:bg-dark-700/20 transition-colors cursor-pointer group"
-                        onClick={() => setSelectedAlert(alert)}
+                        onClick={() => setSelectedAlertId(alert.id)}
                       >
                         <td className="px-4 py-3">
                           <span className={cn(
@@ -756,7 +749,7 @@ export default function Alerts() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedAlert(alert);
+                                setSelectedAlertId(alert.id);
                               }}
                               className="p-1.5 rounded-md text-primary-500 hover:bg-primary-500/10 transition-colors"
                               title="备注"
@@ -830,7 +823,7 @@ export default function Alerts() {
 
       <AlertDetailDrawer
         alert={selectedAlert}
-        onClose={() => setSelectedAlert(null)}
+        onClose={() => setSelectedAlertId(null)}
         onAcknowledge={handleAcknowledge}
         onCloseAlert={handleCloseAlert}
         onAddNote={handleAddNote}

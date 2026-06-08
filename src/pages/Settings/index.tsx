@@ -623,10 +623,9 @@ function EscalationRuleForm({ rule, onSave, onCancel }: EscalationRuleFormProps)
 }
 
 function AlertRulesPanel() {
-  const { alertRules, toggleAlertRule } = useAppStore();
+  const { alertRules, toggleAlertRule, addAlertRule, updateAlertRule, deleteAlertRule } = useAppStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<AlertRule | null>(null);
-  const [localRules, setLocalRules] = useState<AlertRule[]>(alertRules);
 
   const handleEdit = (rule: AlertRule) => {
     setEditingRule(rule);
@@ -634,15 +633,15 @@ function AlertRulesPanel() {
   };
 
   const handleDelete = (id: string) => {
-    setLocalRules(localRules.filter((r) => r.id !== id));
+    deleteAlertRule(id);
   };
 
   const handleSave = (rule: AlertRule) => {
-    const exists = localRules.find((r) => r.id === rule.id);
+    const exists = alertRules.find((r) => r.id === rule.id);
     if (exists) {
-      setLocalRules(localRules.map((r) => (r.id === rule.id ? rule : r)));
+      updateAlertRule(rule);
     } else {
-      setLocalRules([rule, ...localRules]);
+      addAlertRule(rule);
     }
     setIsModalOpen(false);
     setEditingRule(null);
@@ -653,7 +652,7 @@ function AlertRulesPanel() {
     setIsModalOpen(true);
   };
 
-  const rules = localRules.length > 0 ? localRules : alertRules;
+  const rules = alertRules;
 
   return (
     <div className="space-y-4">
@@ -759,10 +758,9 @@ function AlertRulesPanel() {
 }
 
 function SilenceRulesPanel() {
-  const { silenceRules, alertRules, toggleSilenceRule } = useAppStore();
+  const { silenceRules, alertRules, toggleSilenceRule, addSilenceRule, updateSilenceRule, deleteSilenceRule } = useAppStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<SilenceRule | null>(null);
-  const [localRules, setLocalRules] = useState<SilenceRule[]>(silenceRules);
 
   const handleEdit = (rule: SilenceRule) => {
     setEditingRule(rule);
@@ -770,15 +768,15 @@ function SilenceRulesPanel() {
   };
 
   const handleDelete = (id: string) => {
-    setLocalRules(localRules.filter((r) => r.id !== id));
+    deleteSilenceRule(id);
   };
 
   const handleSave = (rule: SilenceRule) => {
-    const exists = localRules.find((r) => r.id === rule.id);
+    const exists = silenceRules.find((r) => r.id === rule.id);
     if (exists) {
-      setLocalRules(localRules.map((r) => (r.id === rule.id ? rule : r)));
+      updateSilenceRule(rule);
     } else {
-      setLocalRules([rule, ...localRules]);
+      addSilenceRule(rule);
     }
     setIsModalOpen(false);
     setEditingRule(null);
@@ -789,7 +787,7 @@ function SilenceRulesPanel() {
     setIsModalOpen(true);
   };
 
-  const rules = localRules.length > 0 ? localRules : silenceRules;
+  const rules = silenceRules;
 
   const getAlertRuleNames = (ids: string[]) => {
     return ids
@@ -910,10 +908,9 @@ function SilenceRulesPanel() {
 }
 
 function EscalationRulesPanel() {
-  const { escalationRules, toggleEscalationRule } = useAppStore();
+  const { escalationRules, toggleEscalationRule, addEscalationRule, updateEscalationRule, deleteEscalationRule } = useAppStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<EscalationRule | null>(null);
-  const [localRules, setLocalRules] = useState<EscalationRule[]>(escalationRules);
 
   const handleEdit = (rule: EscalationRule) => {
     setEditingRule(rule);
@@ -921,15 +918,15 @@ function EscalationRulesPanel() {
   };
 
   const handleDelete = (id: string) => {
-    setLocalRules(localRules.filter((r) => r.id !== id));
+    deleteEscalationRule(id);
   };
 
   const handleSave = (rule: EscalationRule) => {
-    const exists = localRules.find((r) => r.id === rule.id);
+    const exists = escalationRules.find((r) => r.id === rule.id);
     if (exists) {
-      setLocalRules(localRules.map((r) => (r.id === rule.id ? rule : r)));
+      updateEscalationRule(rule);
     } else {
-      setLocalRules([rule, ...localRules]);
+      addEscalationRule(rule);
     }
     setIsModalOpen(false);
     setEditingRule(null);
@@ -940,7 +937,7 @@ function EscalationRulesPanel() {
     setIsModalOpen(true);
   };
 
-  const rules = localRules.length > 0 ? localRules : escalationRules;
+  const rules = escalationRules;
 
   return (
     <div className="space-y-4">
@@ -1062,9 +1059,8 @@ function EscalationRulesPanel() {
 function FavoritesPanel() {
   const { services, toggleFavorite, favoriteServices } = useAppStore();
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [favorites, setFavorites] = useState<Service[]>(favoriteServices);
 
-  const displayServices = favorites.length > 0 ? favorites : favoriteServices;
+  const displayServices = favoriteServices;
 
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);

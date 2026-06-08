@@ -47,8 +47,24 @@ interface AppState {
   get criticalAlerts(): Alert[];
 
   toggleAlertRule: (id: string) => void;
+  addAlertRule: (rule: AlertRule) => void;
+  updateAlertRule: (rule: AlertRule) => void;
+  deleteAlertRule: (id: string) => void;
+
   toggleSilenceRule: (id: string) => void;
+  addSilenceRule: (rule: SilenceRule) => void;
+  updateSilenceRule: (rule: SilenceRule) => void;
+  deleteSilenceRule: (id: string) => void;
+
   toggleEscalationRule: (id: string) => void;
+  addEscalationRule: (rule: EscalationRule) => void;
+  updateEscalationRule: (rule: EscalationRule) => void;
+  deleteEscalationRule: (id: string) => void;
+
+  addPostmortemReport: (report: PostmortemReport) => void;
+  updatePostmortemReport: (report: PostmortemReport) => void;
+  deletePostmortemReport: (id: string) => void;
+  publishPostmortemReport: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>()((set, get) => ({
@@ -147,6 +163,73 @@ export const useAppStore = create<AppState>()((set, get) => ({
     set((state) => ({
       escalationRules: state.escalationRules.map((rule) =>
         rule.id === id ? { ...rule, enabled: !rule.enabled } : rule
+      ),
+    })),
+
+  addAlertRule: (rule: AlertRule) =>
+    set((state) => ({
+      alertRules: [rule, ...state.alertRules],
+    })),
+
+  updateAlertRule: (rule: AlertRule) =>
+    set((state) => ({
+      alertRules: state.alertRules.map((r) => (r.id === rule.id ? rule : r)),
+    })),
+
+  deleteAlertRule: (id: string) =>
+    set((state) => ({
+      alertRules: state.alertRules.filter((r) => r.id !== id),
+    })),
+
+  addSilenceRule: (rule: SilenceRule) =>
+    set((state) => ({
+      silenceRules: [rule, ...state.silenceRules],
+    })),
+
+  updateSilenceRule: (rule: SilenceRule) =>
+    set((state) => ({
+      silenceRules: state.silenceRules.map((r) => (r.id === rule.id ? rule : r)),
+    })),
+
+  deleteSilenceRule: (id: string) =>
+    set((state) => ({
+      silenceRules: state.silenceRules.filter((r) => r.id !== id),
+    })),
+
+  addEscalationRule: (rule: EscalationRule) =>
+    set((state) => ({
+      escalationRules: [rule, ...state.escalationRules],
+    })),
+
+  updateEscalationRule: (rule: EscalationRule) =>
+    set((state) => ({
+      escalationRules: state.escalationRules.map((r) => (r.id === rule.id ? rule : r)),
+    })),
+
+  deleteEscalationRule: (id: string) =>
+    set((state) => ({
+      escalationRules: state.escalationRules.filter((r) => r.id !== id),
+    })),
+
+  addPostmortemReport: (report: PostmortemReport) =>
+    set((state) => ({
+      postmortemReports: [report, ...state.postmortemReports],
+    })),
+
+  updatePostmortemReport: (report: PostmortemReport) =>
+    set((state) => ({
+      postmortemReports: state.postmortemReports.map((r) => (r.id === report.id ? report : r)),
+    })),
+
+  deletePostmortemReport: (id: string) =>
+    set((state) => ({
+      postmortemReports: state.postmortemReports.filter((r) => r.id !== id),
+    })),
+
+  publishPostmortemReport: (id: string) =>
+    set((state) => ({
+      postmortemReports: state.postmortemReports.map((r) =>
+        r.id === id ? { ...r, status: 'published', updatedAt: new Date() } : r
       ),
     })),
 }));

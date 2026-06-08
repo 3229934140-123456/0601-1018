@@ -3,8 +3,8 @@ import type { PostmortemReport } from '../types';
 export const postmortemReports: PostmortemReport[] = [
   {
     id: 'pm-001',
-    incidentId: 'inc-2024-001',
-    title: '订单服务数据库连接池耗尽事故复盘',
+    incidentId: 'inc-001',
+    title: '支付服务连接池泄漏事故复盘',
     createdAt: new Date('2024-01-15T10:00:00Z'),
     updatedAt: new Date('2024-01-18T14:30:00Z'),
     status: 'published',
@@ -41,8 +41,8 @@ export const postmortemReports: PostmortemReport[] = [
   },
   {
     id: 'pm-002',
-    incidentId: 'inc-2024-002',
-    title: '支付网关第三方接口超时事故复盘',
+    incidentId: 'inc-002',
+    title: '搜索服务性能问题事故复盘',
     createdAt: new Date('2024-02-08T15:00:00Z'),
     updatedAt: new Date('2024-02-10T09:00:00Z'),
     status: 'published',
@@ -79,8 +79,8 @@ export const postmortemReports: PostmortemReport[] = [
   },
   {
     id: 'pm-003',
-    incidentId: 'inc-2024-003',
-    title: '用户服务缓存雪崩事故复盘',
+    incidentId: 'inc-003',
+    title: '数据库索引损坏事故复盘',
     createdAt: new Date('2024-03-20T11:00:00Z'),
     updatedAt: new Date('2024-03-22T16:00:00Z'),
     status: 'published',
@@ -117,8 +117,8 @@ export const postmortemReports: PostmortemReport[] = [
   },
   {
     id: 'pm-004',
-    incidentId: 'inc-2024-004',
-    title: '消息队列积压导致物流延迟事故复盘',
+    incidentId: 'inc-004',
+    title: '消息队列积压事故复盘',
     createdAt: new Date('2024-04-12T09:00:00Z'),
     updatedAt: new Date('2024-04-13T11:00:00Z'),
     status: 'draft',
@@ -155,8 +155,8 @@ export const postmortemReports: PostmortemReport[] = [
   },
   {
     id: 'pm-005',
-    incidentId: 'inc-2024-005',
-    title: 'CDN节点故障导致静态资源加载缓慢复盘',
+    incidentId: 'inc-005',
+    title: '认证服务流量突增事故复盘',
     createdAt: new Date('2024-05-05T14:00:00Z'),
     updatedAt: new Date('2024-05-05T14:00:00Z'),
     status: 'draft',

@@ -1,19 +1,5 @@
 import type { MetricData, MetricType } from '../types';
-
-const services = [
-  { id: 'svc-001', name: '用户服务' },
-  { id: 'svc-002', name: '订单服务' },
-  { id: 'svc-003', name: '支付服务' },
-  { id: 'svc-004', name: '商品服务' },
-  { id: 'svc-005', name: '库存服务' },
-  { id: 'svc-006', name: '消息服务' },
-  { id: 'svc-007', name: '搜索服务' },
-  { id: 'svc-008', name: '推荐服务' },
-  { id: 'svc-009', name: '网关服务' },
-  { id: 'svc-010', name: '认证服务' },
-  { id: 'svc-011', name: '日志服务' },
-  { id: 'svc-012', name: '配置中心' },
-];
+import { services } from './services';
 
 const generateDataPoints = (
   baseValue: number,
