@@ -26,6 +26,8 @@ import {
   Bell,
   BarChart3,
   Lightbulb,
+  Wand2,
+  MessageSquare,
 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/lib/utils';
@@ -159,6 +161,9 @@ function PostmortemCard({ report, severity, onView, onEdit, onDelete }: Postmort
   const SeverityIcon = severityInfo.icon;
 
   const summaryLines = report.content.summary.split('\n').slice(0, 2).join('\n');
+  const pendingActionCount = report.content.actionItems.filter(
+    (item) => item.status !== 'completed'
+  ).length;
 
   return (
     <div className="gradient-border p-5 transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/10 group cursor-pointer"
@@ -196,15 +201,17 @@ function PostmortemCard({ report, severity, onView, onEdit, onDelete }: Postmort
       </p>
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4 text-xs text-dark-500">
+        <div className="flex items-center gap-3 text-xs text-dark-500 flex-wrap">
           <span className="flex items-center gap-1">
             <Calendar className="w-3.5 h-3.5" />
-            创建于 {formatRelativeTime(report.createdAt)}
+            {formatRelativeTime(report.createdAt)}
           </span>
-          <span className="flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5" />
-            更新于 {formatRelativeTime(report.updatedAt)}
-          </span>
+          {pendingActionCount > 0 && (
+            <span className="flex items-center gap-1 text-warning-500">
+              <ClockIcon className="w-3.5 h-3.5" />
+              {pendingActionCount} 项待完成
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
@@ -256,6 +263,7 @@ function ReportDrawer({ report, mode, incidents, onClose, onSave, onPublish }: R
   const [actionItems, setActionItems] = useState<ActionItem[]>(report?.content.actionItems || []);
   const [lessonsLearned, setLessonsLearned] = useState(report?.content.lessonsLearned || '');
   const [isEditing, setIsEditing] = useState(mode === 'edit');
+  const [editingStartSnapshot, setEditingStartSnapshot] = useState<PostmortemReport | null>(null);
 
   useEffect(() => {
     if (report) {
@@ -269,11 +277,36 @@ function ReportDrawer({ report, mode, incidents, onClose, onSave, onPublish }: R
       setLessonsLearned(report.content.lessonsLearned);
     }
     setIsEditing(mode === 'edit');
+    if (mode === 'edit' && report) {
+      setEditingStartSnapshot(report);
+    }
   }, [report, mode]);
+
+  const handleCancel = () => {
+    if (editingStartSnapshot) {
+      setTitle(editingStartSnapshot.title);
+      setIncidentId(editingStartSnapshot.incidentId);
+      setSummary(editingStartSnapshot.content.summary);
+      setTimeline(editingStartSnapshot.content.timeline);
+      setRootCause(editingStartSnapshot.content.rootCause);
+      setImpact(editingStartSnapshot.content.impact);
+      setActionItems(editingStartSnapshot.content.actionItems);
+      setLessonsLearned(editingStartSnapshot.content.lessonsLearned);
+    }
+    setIsEditing(false);
+  };
 
   const selectedIncident = incidents.find((i) => i.id === incidentId);
   const severityInfo = selectedIncident ? severityConfig[selectedIncident.severity] : severityConfig.minor;
   const SeverityIcon = severityInfo.icon;
+
+  const handleGenerateFromIncident = () => {
+    if (!selectedIncident) return;
+    setTitle(`${selectedIncident.title} - 复盘报告`);
+    setSummary(selectedIncident.description || '');
+    setTimeline(selectedIncident.timeline || '');
+    setImpact(selectedIncident.impact || '');
+  };
 
   const handleAddActionItem = () => {
     const newItem: ActionItem = {
@@ -282,6 +315,7 @@ function ReportDrawer({ report, mode, incidents, onClose, onSave, onPublish }: R
       owner: '',
       dueDate: new Date(),
       status: 'pending',
+      note: '',
     };
     setActionItems([...actionItems, newItem]);
   };
@@ -394,16 +428,28 @@ function ReportDrawer({ report, mode, incidents, onClose, onSave, onPublish }: R
                 <div>
                   <label className={labelClass}>关联事故</label>
                   {isEditing ? (
-                    <select
-                      value={incidentId}
-                      onChange={(e) => setIncidentId(e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="">请选择事故</option>
-                      {incidents.map((inc) => (
-                        <option key={inc.id} value={inc.id}>{inc.title}</option>
-                      ))}
-                    </select>
+                    <div className="space-y-2">
+                      <select
+                        value={incidentId}
+                        onChange={(e) => setIncidentId(e.target.value)}
+                        className={inputClass}
+                      >
+                        <option value="">请选择事故</option>
+                        {incidents.map((inc) => (
+                          <option key={inc.id} value={inc.id}>{inc.title}</option>
+                        ))}
+                      </select>
+                      {incidentId && (
+                        <button
+                          type="button"
+                          onClick={handleGenerateFromIncident}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary-500/10 border border-primary-500/30 text-primary-400 text-xs hover:bg-primary-500/20 transition-colors"
+                        >
+                          <Wand2 className="w-3.5 h-3.5" />
+                          从事故生成初稿
+                        </button>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-white text-sm">{selectedIncident?.title || '-'}</p>
                   )}
@@ -596,25 +642,40 @@ function ReportDrawer({ report, mode, incidents, onClose, onSave, onPublish }: R
                               </button>
                             </div>
                           </div>
+                          <textarea
+                            value={item.note || ''}
+                            onChange={(e) => handleUpdateActionItem(item.id, 'note', e.target.value)}
+                            placeholder="备注信息..."
+                            rows={2}
+                            className={cn(inputClass + " text-xs")}
+                          />
                         </div>
                       ) : (
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white text-sm font-medium mb-1">{item.description}</p>
-                            <div className="flex items-center gap-3 text-xs text-dark-400">
-                              <span>负责人: {item.owner || '-'}</span>
-                              <span>截止: {formatDateTime(item.dueDate).split(' ')[0]}</span>
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white text-sm font-medium mb-1">{item.description}</p>
+                              <div className="flex items-center gap-3 text-xs text-dark-400">
+                                <span>负责人: {item.owner || '-'}</span>
+                                <span>截止: {formatDateTime(item.dueDate).split(' ')[0]}</span>
+                              </div>
                             </div>
+                            <span className={cn(
+                              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border flex-shrink-0 cursor-pointer',
+                              statusInfo.bgColor,
+                              statusInfo.borderColor,
+                              statusInfo.color
+                            )}>
+                              <StatusIcon className="w-3 h-3" />
+                              {statusInfo.label}
+                            </span>
                           </div>
-                          <span className={cn(
-                            'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border flex-shrink-0',
-                            statusInfo.bgColor,
-                            statusInfo.borderColor,
-                            statusInfo.color
-                          )}>
-                            <StatusIcon className="w-3 h-3" />
-                            {statusInfo.label}
-                          </span>
+                          {item.note && (
+                            <div className="flex items-start gap-1.5 p-2 rounded-md bg-dark-700/40 border border-dark-600/30">
+                              <MessageSquare className="w-3.5 h-3.5 text-dark-400 flex-shrink-0 mt-0.5" />
+                              <p className="text-xs text-dark-300 leading-relaxed">{item.note}</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -667,7 +728,7 @@ function ReportDrawer({ report, mode, incidents, onClose, onSave, onPublish }: R
               <>
                 <button
                   type="button"
-                  onClick={() => setIsEditing(false)}
+                  onClick={handleCancel}
                   className="px-4 py-2 rounded-lg bg-dark-700/50 border border-dark-600/50 text-dark-300 hover:bg-dark-600/50 transition-colors text-sm"
                 >
                   取消
@@ -907,6 +968,8 @@ export default function Postmortem() {
 
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [timeFilter, setTimeFilter] = useState<string>('all');
+  const [severityFilter, setSeverityFilter] = useState<string>('all');
+  const [incidentFilter, setIncidentFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [drawerMode, setDrawerMode] = useState<'view' | 'edit'>('view');
@@ -955,15 +1018,29 @@ export default function Postmortem() {
         }
       }
 
+      const incident = incidentMap.get(report.incidentId);
+      if (severityFilter !== 'all') {
+        if (!incident || incident.severity !== severityFilter) return false;
+      }
+
+      if (incidentFilter !== 'all' && report.incidentId !== incidentFilter) {
+        return false;
+      }
+
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        return report.title.toLowerCase().includes(query) ||
-          report.content.summary.toLowerCase().includes(query);
+        const titleMatch = report.title.toLowerCase().includes(query);
+        const summaryMatch = report.content.summary.toLowerCase().includes(query);
+        const rootCauseMatch = report.content.rootCause.toLowerCase().includes(query);
+        const impactMatch = report.content.impact.toLowerCase().includes(query);
+        const lessonsMatch = report.content.lessonsLearned.toLowerCase().includes(query);
+        const incidentMatch = incident?.title.toLowerCase().includes(query) || false;
+        return titleMatch || summaryMatch || rootCauseMatch || impactMatch || lessonsMatch || incidentMatch;
       }
 
       return true;
     });
-  }, [postmortemReports, statusFilter, timeFilter, searchQuery]);
+  }, [postmortemReports, statusFilter, timeFilter, severityFilter, incidentFilter, searchQuery, incidentMap]);
 
   const handleView = (report: PostmortemReport) => {
     setSelectedReportId(report.id);
@@ -1076,6 +1153,26 @@ export default function Postmortem() {
             ]}
             onChange={(v) => setTimeFilter(v)}
           />
+          <FilterSelect
+            label="事故级别"
+            value={severityFilter}
+            options={[
+              { value: 'all', label: '全部' },
+              { value: 'critical', label: '严重' },
+              { value: 'major', label: '主要' },
+              { value: 'minor', label: '次要' },
+            ]}
+            onChange={(v) => setSeverityFilter(v)}
+          />
+          <FilterSelect
+            label="关联事故"
+            value={incidentFilter}
+            options={[
+              { value: 'all', label: '全部' },
+              ...incidents.map((inc) => ({ value: inc.id, label: inc.title })),
+            ]}
+            onChange={(v) => setIncidentFilter(v)}
+          />
           <div className="relative ml-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
             <input
@@ -1113,20 +1210,22 @@ export default function Postmortem() {
         )}
       </div>
 
-      <ReportDrawer
-        report={selectedReport}
-        mode={drawerMode}
-        incidents={Array.from(incidentMap.values())}
-        onClose={() => {
-          if (isNewReport && selectedReportId) {
-            deletePostmortemReport(selectedReportId);
-          }
-          setSelectedReportId(null);
-          setIsNewReport(false);
-        }}
-        onSave={handleSaveReport}
-        onPublish={handlePublishReport}
-      />
+      {selectedReport && (
+        <ReportDrawer
+          report={selectedReport}
+          mode={drawerMode}
+          incidents={Array.from(incidentMap.values())}
+          onClose={() => {
+            if (isNewReport && selectedReportId) {
+              deletePostmortemReport(selectedReportId);
+            }
+            setSelectedReportId(null);
+            setIsNewReport(false);
+          }}
+          onSave={handleSaveReport}
+          onPublish={handlePublishReport}
+        />
+      )}
 
       <MonthlyReportModal
         isOpen={showMonthlyModal}

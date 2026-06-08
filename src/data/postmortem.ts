@@ -19,21 +19,24 @@ export const postmortemReports: PostmortemReport[] = [
           description: '优化订单查询SQL，添加合适的索引',
           owner: '张伟',
           dueDate: new Date('2024-01-20T00:00:00Z'),
-          status: 'completed'
+          status: 'completed',
+          note: ''
         },
         {
           id: 'ai-002',
           description: '增加数据库连接池监控和告警',
           owner: '李娜',
           dueDate: new Date('2024-01-22T00:00:00Z'),
-          status: 'completed'
+          status: 'completed',
+          note: ''
         },
         {
           id: 'ai-003',
           description: '建立慢查询自动检测机制',
           owner: '王强',
           dueDate: new Date('2024-02-01T00:00:00Z'),
-          status: 'in-progress'
+          status: 'in-progress',
+          note: ''
         }
       ],
       lessonsLearned: '1. 数据库性能问题具有累积效应，小问题在流量高峰时会被放大\n2. 连接池耗尽是严重问题，需要更灵敏的监控和更快的响应\n3. 慢查询治理是持续性工作，需要定期巡检\n4. 应急响应流程需要优化，缩短定位时间'
@@ -57,21 +60,24 @@ export const postmortemReports: PostmortemReport[] = [
           description: '增加第三家支付通道作为备份',
           owner: '刘洋',
           dueDate: new Date('2024-03-01T00:00:00Z'),
-          status: 'in-progress'
+          status: 'in-progress',
+          note: ''
         },
         {
           id: 'ai-005',
           description: '实现支付网关自动降级和快速超时',
           owner: '陈明',
           dueDate: new Date('2024-02-25T00:00:00Z'),
-          status: 'completed'
+          status: 'completed',
+          note: ''
         },
         {
           id: 'ai-006',
           description: '完善重复支付的自动退款机制',
           owner: '赵芳',
           dueDate: new Date('2024-02-28T00:00:00Z'),
-          status: 'pending'
+          status: 'pending',
+          note: ''
         }
       ],
       lessonsLearned: '1. 不能完全依赖第三方的高可用性，需要自身具备容错能力\n2. 多通道备份需要考虑独立性，避免单点故障\n3. 超时时间设置对系统韧性至关重要\n4. 与第三方服务商需要建立更紧密的故障沟通机制'
@@ -95,21 +101,24 @@ export const postmortemReports: PostmortemReport[] = [
           description: '实现多级缓存策略（本地缓存+分布式缓存）',
           owner: '林凯',
           dueDate: new Date('2024-04-15T00:00:00Z'),
-          status: 'in-progress'
+          status: 'in-progress',
+          note: ''
         },
         {
           id: 'ai-008',
           description: '增加缓存预热和降级机制',
           owner: '周婷',
           dueDate: new Date('2024-04-01T00:00:00Z'),
-          status: 'completed'
+          status: 'completed',
+          note: ''
         },
         {
           id: 'ai-009',
           description: '优化数据库连接池和读写分离',
           owner: '吴俊',
           dueDate: new Date('2024-04-10T00:00:00Z'),
-          status: 'pending'
+          status: 'pending',
+          note: ''
         }
       ],
       lessonsLearned: '1. 缓存故障转移不等于数据不丢失，需要考虑缓存重建策略\n2. 数据库需要有足够的弹性应对缓存失效场景\n3. 限流降级是保护系统的重要手段\n4. 需要定期进行故障演练，验证系统韧性'
@@ -133,21 +142,24 @@ export const postmortemReports: PostmortemReport[] = [
           description: '优化物流系统数据库表索引',
           owner: '孙磊',
           dueDate: new Date('2024-04-18T00:00:00Z'),
-          status: 'completed'
+          status: 'completed',
+          note: ''
         },
         {
           id: 'ai-011',
           description: '增加消息队列积压深度监控和自动告警',
           owner: '黄海',
           dueDate: new Date('2024-04-20T00:00:00Z'),
-          status: 'in-progress'
+          status: 'in-progress',
+          note: ''
         },
         {
           id: 'ai-012',
           description: '实现消费速率自适应调整机制',
           owner: '徐丽',
           dueDate: new Date('2024-05-01T00:00:00Z'),
-          status: 'pending'
+          status: 'pending',
+          note: ''
         }
       ],
       lessonsLearned: '1. 消息队列积压是下游系统故障的重要信号\n2. 数据库锁问题会严重影响消息消费性能\n3. 需要建立消息积压的快速响应机制\n4. 消费能力需要具备弹性扩展能力'
@@ -171,21 +183,24 @@ export const postmortemReports: PostmortemReport[] = [
           description: '评估引入第二家CDN服务商',
           owner: '马强',
           dueDate: new Date('2024-05-20T00:00:00Z'),
-          status: 'pending'
+          status: 'pending',
+          note: ''
         },
         {
           id: 'ai-014',
           description: '实现静态资源多CDN自动切换',
           owner: '胡杰',
           dueDate: new Date('2024-06-01T00:00:00Z'),
-          status: 'pending'
+          status: 'pending',
+          note: ''
         },
         {
           id: 'ai-015',
           description: '增加前端资源加载失败的降级处理',
           owner: '罗敏',
           dueDate: new Date('2024-05-15T00:00:00Z'),
-          status: 'in-progress'
+          status: 'in-progress',
+          note: ''
         }
       ],
       lessonsLearned: '1. CDN单点服务商存在区域性故障风险\n2. 前端需要有资源加载失败的降级策略\n3. 需要建立更主动的CDN质量监控\n4. 与CDN服务商的SLA需要更明确的故障响应时间'

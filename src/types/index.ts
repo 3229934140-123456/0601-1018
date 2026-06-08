@@ -108,6 +108,7 @@ export interface ActionItem {
   owner: string;
   dueDate: Date;
   status: 'pending' | 'in-progress' | 'completed';
+  note: string;
 }
 
 export interface PostmortemReport {
