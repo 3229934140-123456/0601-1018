@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   AlertTriangle,
   BellOff,
@@ -1057,10 +1057,16 @@ function EscalationRulesPanel() {
 }
 
 function FavoritesPanel() {
-  const { services, toggleFavorite, favoriteServices } = useAppStore();
+  const { services, toggleFavorite, favoriteServices, updateFavoriteOrder } = useAppStore();
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [localOrder, setLocalOrder] = useState<string[]>(favoriteServices.map((s) => s.id));
 
-  const displayServices = favoriteServices;
+  const displayServices = useMemo(() => {
+    const serviceMap = new Map(services.map((s) => [s.id, s]));
+    return localOrder
+      .map((id) => serviceMap.get(id))
+      .filter((s): s is Service => s !== undefined && s.isFavorite);
+  }, [localOrder, services]);
 
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);
@@ -1070,16 +1076,29 @@ function FavoritesPanel() {
     e.preventDefault();
     if (draggedIndex === null || draggedIndex === index) return;
 
-    const newFavorites = [...displayServices];
-    const [draggedItem] = newFavorites.splice(draggedIndex, 1);
-    newFavorites.splice(index, 0, draggedItem);
-    setFavorites(newFavorites);
+    const newOrder = [...localOrder];
+    const [draggedItem] = newOrder.splice(draggedIndex, 1);
+    newOrder.splice(index, 0, draggedItem);
+    setLocalOrder(newOrder);
     setDraggedIndex(index);
   };
 
   const handleDragEnd = () => {
+    if (draggedIndex !== null) {
+      updateFavoriteOrder(localOrder);
+    }
     setDraggedIndex(null);
   };
+
+  useEffect(() => {
+    const storeOrder = favoriteServices.map((s) => s.id);
+    const hasSameIds =
+      storeOrder.length === localOrder.length &&
+      storeOrder.every((id, i) => id === localOrder[i]);
+    if (!hasSameIds && draggedIndex === null) {
+      setLocalOrder(storeOrder);
+    }
+  }, [favoriteServices, draggedIndex, localOrder]);
 
   const statusConfig = {
     healthy: { label: '正常', color: 'text-success-500', bgColor: 'bg-success-500/10', dotColor: 'bg-success-500' },

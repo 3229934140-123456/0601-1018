@@ -35,10 +35,12 @@ interface AppState {
   postmortemReports: PostmortemReport[];
   dutyRecords: DutyRecord[];
   dutyPersons: DutyPerson[];
+  favoriteOrder: string[];
 
   toggleFavorite: (serviceId: string) => void;
   getServiceById: (id: string) => Service | undefined;
   get favoriteServices(): Service[];
+  updateFavoriteOrder: (order: string[]) => void;
 
   acknowledgeAlert: (alertId: string, person: string) => void;
   closeAlert: (alertId: string, person: string) => void;
@@ -67,6 +69,10 @@ interface AppState {
   publishPostmortemReport: (id: string) => void;
 }
 
+const initialFavoriteOrder = initialServices
+  .filter((s) => s.isFavorite)
+  .map((s) => s.id);
+
 export const useAppStore = create<AppState>()((set, get) => ({
   services: initialServices,
   alerts: initialAlerts,
@@ -77,21 +83,45 @@ export const useAppStore = create<AppState>()((set, get) => ({
   postmortemReports: initialPostmortemReports,
   dutyRecords: initialDutyRecords,
   dutyPersons: initialDutyPersons,
+  favoriteOrder: initialFavoriteOrder,
 
   toggleFavorite: (serviceId: string) =>
-    set((state) => ({
-      services: state.services.map((service) =>
-        service.id === serviceId
-          ? { ...service, isFavorite: !service.isFavorite }
-          : service
-      ),
-    })),
+    set((state) => {
+      const service = state.services.find((s) => s.id === serviceId);
+      const isAdding = service && !service.isFavorite;
+
+      let newFavoriteOrder = state.favoriteOrder;
+      if (isAdding) {
+        newFavoriteOrder = [...state.favoriteOrder, serviceId];
+      } else {
+        newFavoriteOrder = state.favoriteOrder.filter((id) => id !== serviceId);
+      }
+
+      return {
+        services: state.services.map((service) =>
+          service.id === serviceId
+            ? { ...service, isFavorite: !service.isFavorite }
+            : service
+        ),
+        favoriteOrder: newFavoriteOrder,
+      };
+    }),
 
   getServiceById: (id: string) => get().services.find((s) => s.id === id),
 
   get favoriteServices() {
-    return get().services.filter((s) => s.isFavorite);
+    const order = get().favoriteOrder;
+    const services = get().services;
+    const serviceMap = new Map(services.map((s) => [s.id, s]));
+    return order
+      .map((id) => serviceMap.get(id))
+      .filter((s): s is Service => s !== undefined && s.isFavorite);
   },
+
+  updateFavoriteOrder: (order: string[]) =>
+    set((state) => ({
+      favoriteOrder: order,
+    })),
 
   acknowledgeAlert: (alertId: string, person: string) =>
     set((state) => ({

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   FileText,
   Search,
@@ -256,6 +256,20 @@ function ReportDrawer({ report, mode, incidents, onClose, onSave, onPublish }: R
   const [actionItems, setActionItems] = useState<ActionItem[]>(report?.content.actionItems || []);
   const [lessonsLearned, setLessonsLearned] = useState(report?.content.lessonsLearned || '');
   const [isEditing, setIsEditing] = useState(mode === 'edit');
+
+  useEffect(() => {
+    if (report) {
+      setTitle(report.title);
+      setIncidentId(report.incidentId);
+      setSummary(report.content.summary);
+      setTimeline(report.content.timeline);
+      setRootCause(report.content.rootCause);
+      setImpact(report.content.impact);
+      setActionItems(report.content.actionItems);
+      setLessonsLearned(report.content.lessonsLearned);
+    }
+    setIsEditing(mode === 'edit');
+  }, [report, mode]);
 
   const selectedIncident = incidents.find((i) => i.id === incidentId);
   const severityInfo = selectedIncident ? severityConfig[selectedIncident.severity] : severityConfig.minor;
